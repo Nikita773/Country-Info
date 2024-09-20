@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, Signal, signal, WritableSignal } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,28 +26,29 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit {
-  protected searchQuery: string = '';
-  private countries: Country[] = [];
+  protected searchQuery: WritableSignal<string> = signal('');
+  protected filteredCountries: Signal<Country[]> = computed(() => this.filterCountries());
+  private countries: WritableSignal<Country[]> = signal([]);
 
   private readonly countryService: CountryService = inject(CountryService);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   public ngOnInit(): void {
-    this.getCountries();
+    this.fetchCountries();
   }
 
   protected filterCountries(): Country[] {
-    return this.countries.filter((country: Country) =>
-      country.name.toLowerCase().includes(this.searchQuery.toLowerCase()),
+    return this.countries().filter((country: Country) =>
+      country.name.toLowerCase().includes(this.searchQuery().toLowerCase()),
     );
   }
 
-  private getCountries(): void {
+  private fetchCountries(): void {
     this.countryService
       .getAvailableCountries()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((countries: Country[]) => {
-        this.countries = countries;
+        this.countries.set(countries);
       });
   }
 }

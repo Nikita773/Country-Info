@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { CountryService } from '../../core/services/country.service';
@@ -15,7 +15,7 @@ import { Widget } from '../../core/models/widget.model';
   styleUrl: './random-country-widget.component.scss',
 })
 export class RandomCountryWidgetComponent implements OnInit {
-  protected randomCountries: Widget[] = [];
+  protected randomCountries: WritableSignal<Widget[]> = signal([]);
   private readonly countryService: CountryService = inject(CountryService);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
@@ -26,8 +26,8 @@ export class RandomCountryWidgetComponent implements OnInit {
   private loadRandomCountries(): void {
     this.getRandomCountriesWithNextHolidays()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((countriesWithHolidays) => {
-        this.randomCountries = countriesWithHolidays;
+      .subscribe((countriesWithHolidays: Widget[]) => {
+        this.randomCountries.set(countriesWithHolidays);
       });
   }
 
@@ -61,6 +61,13 @@ export class RandomCountryWidgetComponent implements OnInit {
   }
 
   private getRandomElements(array: Country[], count: number): Country[] {
-    return array.sort(() => Math.random() - 0.5).slice(0, count);
+    const uniqueIndices: Set<number> = new Set<number>();
+
+    while (uniqueIndices.size < count) {
+      const randomIndex: number = Math.floor(Math.random() * array.length);
+      uniqueIndices.add(randomIndex);
+    }
+
+    return Array.from(uniqueIndices).map((index: number) => array[index]);
   }
 }

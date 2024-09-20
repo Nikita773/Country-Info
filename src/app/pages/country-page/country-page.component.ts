@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatButton } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,32 +15,32 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './country-page.component.scss',
 })
 export class CountryPageComponent implements OnInit {
-  protected countryCode!: string;
-  protected holidays: Holiday[] = [];
-  protected years: number[] = Array.from({ length: 11 }, (_, index: number) => 2020 + index);
-  private currentYear: number = new Date().getFullYear();
+  protected countryCode: WritableSignal<string> = signal('');
+  protected holidays: WritableSignal<Holiday[]> = signal([]);
+  protected readonly years: number[] = Array.from({ length: 11 }, (_, index: number) => 2020 + index);
+  private currentYear: WritableSignal<number> = signal(new Date().getFullYear());
   private readonly countryService: CountryService = inject(CountryService);
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   public ngOnInit(): void {
-    this.route.paramMap.subscribe((params: ParamMap) => {
-      this.countryCode = params.get('code') || '';
-      this.getHolidays(this.currentYear);
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: ParamMap) => {
+      this.countryCode.set(params.get('code') || '');
+      this.fetchHolidays(this.currentYear(), this.countryCode());
     });
   }
 
   protected changeYear(year: number): void {
-    this.currentYear = year;
-    this.getHolidays(year);
+    this.currentYear.set(year);
+    this.fetchHolidays(this.currentYear(), this.countryCode());
   }
 
-  private getHolidays(year: number): void {
+  private fetchHolidays(year: number, countryCode: string): void {
     this.countryService
-      .getHolidays(year, this.countryCode)
+      .getHolidays(year, countryCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((holidays: Holiday[]) => {
-        this.holidays = holidays;
+        this.holidays.set(holidays);
       });
   }
 }

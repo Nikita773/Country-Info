@@ -1,6 +1,6 @@
 <mat-card>
   <mat-card-header>
-    <mat-card-title>Holidays in {{ countryCode }}</mat-card-title>
+    <mat-card-title>Holidays in {{ countryCode() }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div>
@@ -11,7 +11,7 @@
       }
     </div>
     <mat-list>
-      @for (holiday of holidays; track holiday.name) {
+      @for (holiday of holidays(); track holiday.name) {
         <mat-list-item>
           <div>
             <strong>{{ holiday.localName }}</strong

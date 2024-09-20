@@ -1,0 +1,25 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Holidays in {{ countryCode }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div>
+      @for (year of years; track $index) {
+        <button mat-raised-button color="primary" (click)="changeYear(year)">
+          {{ year }}
+        </button>
+      }
+    </div>
+    <mat-list>
+      @for (holiday of holidays; track holiday.name) {
+        <mat-list-item>
+          <div>
+            <strong>{{ holiday.localName }}</strong
+            ><br />
+            {{ holiday.date }} ({{ holiday.types.join(', ') }})
+          </div>
+        </mat-list-item>
+      }
+    </mat-list>
+  </mat-card-content>
+</mat-card>
